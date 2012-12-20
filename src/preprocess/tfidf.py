@@ -32,7 +32,7 @@ def process_aminer(docs):
         verbose.debug(row[0])
         docs['id'].append(row[0])
         docs['type'].append(1)
-        data+=row[1]
+        data+=(row[1]+'\n')
         if row[2]!= -1:
             mysql.cur.execute("SELECT * FROM contact_info c WHERE c.id = '"+str(row[2])+"'")
             contact = mysql.cur.fetchall()
@@ -50,13 +50,13 @@ def process_aminer(docs):
         organization = mysql.cur.fetchall()
         for o in organization:
             data+=str(o[4])
-        docs['data'].append(UnicodeDammit(data).markup)
+        docs['data'].append(UnicodeDammit(data.replace(","," ")).markup)
     return docs
     
 def process_linkedin(docs):
     mongo = Mongo()
     col = mongo.db['person_profiles']
-    res = col.find(limit=10)
+    res = col.find()
     for item in res:
         data = ""
         verbose.debug(item['_id'])
@@ -108,7 +108,7 @@ def process_linkedin(docs):
     return docs
 
 def tfidf(docs):
-    vectorizer = CountVectorizer(min_df=1,stop_words='english')
+    vectorizer = CountVectorizer(max_df=0.5,min_df=1,stop_words='english')
     transformer = TfidfTransformer()#subliner_tf stop_words='english'
     counts = vectorizer.fit_transform(docs['data'])
     tfidfs = transformer.fit_transform(counts)
@@ -117,22 +117,33 @@ def tfidf(docs):
     out_tfidfs = codecs.open(settings.DATA_PATH+"\\tfidfs",'w', encoding="utf-8")
     out_sum_counts = codecs.open(settings.DATA_PATH+"\\sum_counts",'w', encoding="utf-8")
     out_sum_tfidfs = codecs.open(settings.DATA_PATH+"\\sum_tfidfs",'w', encoding="utf-8")
-    arr_counts = counts.toarray()
-    arr_tfidfs = tfidfs.toarray()
+#    arr_counts = counts.toarray()
+#    arr_tfidfs = tfidfs.toarray()
     sum_counts = counts.sum(axis=0)
-    sum_tfidfs = counts.sum(axis=0)
-    for i in range(len(docs['id'])):
-        out_counts.write(str(docs['id'][i])+':')
-        out_tfidfs.write(str(docs['id'][i])+':')
-        verbose.debug(docs['id'][i])
-        for j in range(len(feature_names)):
-            if arr_counts[i,j]!=0:
-                verbose.debug(feature_names[j]+','+str(arr_counts[i,j]))
-                out_counts.write(feature_names[j]+','+str(arr_counts[i,j])+'#')
-                out_tfidfs.write(feature_names[j]+','+str(arr_tfidfs[i,j])+'#')
-        out_counts.write('\n')
-        out_tfidfs.write('\n')
-    for i in range(len(arr_counts[0])):
+    sum_tfidfs = tfidfs.sum(axis=0)
+    nonzero_count = counts.nonzero()
+    nonzero_tfidf = tfidfs.nonzero()
+    id = nonzero_count[0][0]
+    out_counts.write(str(docs['id'][id])+':')
+    out_counts.write(feature_names[nonzero_count[1][0]]+','+str(counts.getrow(id)[0,nonzero_count[1][0]])+'#')
+    for i in range(1,len(nonzero_count[0])):
+        if id!=nonzero_count[0][i]:
+            id = nonzero_count[0][i]
+            out_counts.write("\n")
+            out_counts.write(str(docs['id'][id])+':')
+        out_counts.write(feature_names[nonzero_count[1][i]]+','+str(counts.getrow(id)[0,nonzero_count[1][i]])+'#')
+    id = nonzero_tfidf[0][0]
+    out_tfidfs.write(str(docs['id'][id])+':')
+    out_tfidfs.write(feature_names[nonzero_tfidf[1][0]]+','+str(tfidfs.getrow(id)[0,nonzero_tfidf[1][0]])+'#')
+    for i in range(1,len(nonzero_tfidf[0])):
+        if id!=nonzero_tfidf[0][i]:
+            id = nonzero_tfidf[0][i]
+            print id
+            out_tfidfs.write("\n")
+            out_tfidfs.write(str(docs['id'][id])+':')
+        out_tfidfs.write(feature_names[nonzero_tfidf[1][i]]+','+str(tfidfs.getrow(id)[0,nonzero_tfidf[1][i]])+'#')
+   
+    for i in range(sum_counts.shape[1]):
         out_sum_counts.write(feature_names[i]+' '+str(sum_counts[0,i])+'\n')
         out_sum_tfidfs.write(feature_names[i]+' '+str(sum_tfidfs[0,i])+'\n')
     out_counts.close()

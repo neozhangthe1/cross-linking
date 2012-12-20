@@ -73,7 +73,6 @@ def split_linkedin_dump():
             log.write("[EXCEPTION]"+str(count)+":"+line+'\n')
         out.write(line[x:])
         
-        
 def get_linkedin_profile():
     path = settings.DATA_PATH+"\\linkedin\\"
     mongo = Mongo()

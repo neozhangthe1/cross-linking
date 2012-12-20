@@ -6,7 +6,7 @@ Created on Dec 18, 2012
 from src.metadata import settings
 import MySQLdb
 
-SQL_GET_PERSON = "SELECT * FROM na_person where id<100"
+SQL_GET_PERSON = "SELECT * FROM na_person"
 SQL_GET_PROFILE = "SELECT * FROM person_profile_ext"
 
 class Mysql(object):
