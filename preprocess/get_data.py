@@ -66,7 +66,7 @@ def split_linkedin_dump():
             id_map.write(str(count)+' '+line[1:x]+'\n')
             count+=1
             try:
-                out = codecs.open("H:\\data\\linkedin1\\"+line[1:x],'w', encoding="utf-8")
+                out = codecs.open("C:\\data\\linkedin1\\"+line[1:x].strip().replace('"'," ").split('?')[0],'w', encoding="utf-8")
             except Exception, e:
                 print e
         else:
