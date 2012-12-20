@@ -11,5 +11,5 @@ MONGO_NAME = "scrapy"
 import os
 HERE = os.path.abspath(os.curdir)
 PROJ_PATH = os.path.split(HERE)[0]
-DATA_PATH = "H:\\data"#os.path.join(PROJ_PATH, "data").replace('\\','/')
+DATA_PATH = os.path.join(PROJ_PATH, "data").replace('\\','/')
 LOG_PATH = ""
