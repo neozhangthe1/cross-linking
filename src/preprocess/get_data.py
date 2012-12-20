@@ -3,10 +3,10 @@ Created on Dec 18, 2012
 
 @author: Yutao
 '''
-from metadata import settings
-from metadata import verbose
-from database.mongo import Mongo
-from database.mysql import Mysql
+from src.metadata import settings
+from src.metadata import verbose
+from src.database.mongo import Mongo
+from src.database.mysql import Mysql
 from bs4 import BeautifulSoup
 from bs4 import UnicodeDammit
 import codecs # this is a workaround for writing unicode string to file.

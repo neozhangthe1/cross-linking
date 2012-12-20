@@ -5,10 +5,10 @@ Created on Dec 18, 2012
 '''
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.datasets import load_files
-from metadata import settings
-from metadata import verbose
-from database.mongo import Mongo
-from database.mysql import Mysql 
+from src.metadata import settings
+from src.metadata import verbose
+from src.database.mongo import Mongo
+from src.database.mysql import Mysql 
 import codecs
 import numpy as np
 
