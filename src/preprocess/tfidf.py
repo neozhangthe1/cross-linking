@@ -11,6 +11,8 @@ from src.database.mongo import Mongo
 from src.database.mysql import Mysql 
 import codecs
 import numpy as np
+from bs4 import BeautifulSoup
+from bs4 import UnicodeDammit
 
 def sort(items):
     sorted = np.argsort(items)
@@ -19,6 +21,8 @@ def sort(items):
 def process_data():
     docs = {'id':[], 'data':[], 'type':[]}
     docs = process_linkedin(docs)
+    docs = process_aminer(docs)
+    tfidf(docs)
     
 def process_aminer(docs):
     mysql = Mysql()
@@ -36,23 +40,23 @@ def process_aminer(docs):
                 for i in [1,4,5,7,8,14,15,17,18,20,21,22,24]:
                     if c[i]!=None:
                         try:
-                            data+=(str(c[i]))
+                            data+=(str(c[i])+'\n')
                         except:
                             try:
-                                data+=str(c[i])
+                                data+=(str(c[i])+'\n')
                             except Exception, e:
                                 print e
         mysql.cur.execute("SELECT * FROM na_person_organization o WHERE o.aid = "+str(row[0]))
         organization = mysql.cur.fetchall()
         for o in organization:
             data+=str(o[4])
-        docs['data'].append(data)
+        docs['data'].append(UnicodeDammit(data).markup)
     return docs
     
 def process_linkedin(docs):
     mongo = Mongo()
     col = mongo.db['person_profiles']
-    res = col.find()
+    res = col.find(limit=10)
     for item in res:
         data = ""
         verbose.debug(item['_id'])
@@ -100,13 +104,13 @@ def process_linkedin(docs):
         if item.has_key('honors'):
             for h in item['honors']:
                 data+=(h+'\n')
-        docs['data'].append(data)
+        docs['data'].append(UnicodeDammit(data).markup)
     return docs
 
 def tfidf(docs):
     vectorizer = CountVectorizer(min_df=1,stop_words='english')
     transformer = TfidfTransformer()#subliner_tf stop_words='english'
-    counts = vectorizer.fit_transform(docs.data)
+    counts = vectorizer.fit_transform(docs['data'])
     tfidfs = transformer.fit_transform(counts)
     feature_names = vectorizer.get_feature_names()
     out_counts = codecs.open(settings.DATA_PATH+"\\counts",'w', encoding="utf-8")
@@ -117,14 +121,17 @@ def tfidf(docs):
     arr_tfidfs = tfidfs.toarray()
     sum_counts = counts.sum(axis=0)
     sum_tfidfs = counts.sum(axis=0)
-    for i in range(len(arr_counts[0])):
-        out_counts.write(docs['id'][i]+':')
+    for i in range(len(docs['id'])):
+        out_counts.write(str(docs['id'][i])+':')
+        out_tfidfs.write(str(docs['id'][i])+':')
         verbose.debug(docs['id'][i])
         for j in range(len(feature_names)):
             if arr_counts[i,j]!=0:
                 verbose.debug(feature_names[j]+','+str(arr_counts[i,j]))
-                out_counts.write(feature_names[j]+','+str(arr_counts[i,j])+'.')
-                out_tfidfs.write(feature_names[i]+','+str(arr_tfidfs[i,j])+'.')
+                out_counts.write(feature_names[j]+','+str(arr_counts[i,j])+'#')
+                out_tfidfs.write(feature_names[j]+','+str(arr_tfidfs[i,j])+'#')
+        out_counts.write('\n')
+        out_tfidfs.write('\n')
     for i in range(len(arr_counts[0])):
         out_sum_counts.write(feature_names[i]+' '+str(sum_counts[0,i])+'\n')
         out_sum_tfidfs.write(feature_names[i]+' '+str(sum_tfidfs[0,i])+'\n')
@@ -135,7 +142,7 @@ def tfidf(docs):
     
 
 def main():
-    tfidf()
+    process_data()
 
 
 if __name__ == "__main__":

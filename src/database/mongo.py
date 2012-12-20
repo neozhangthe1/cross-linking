@@ -3,7 +3,7 @@ Created on Dec 18, 2012
 
 @author: Yutao
 '''
-from metadata import settings
+from src.metadata import settings
 import pymongo
 
 class Mongo(object):

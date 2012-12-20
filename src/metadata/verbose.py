@@ -6,6 +6,6 @@ Created on Dec 19, 2012
 
 def debug(out):
     try:
-        print "[DEBUG]"+out
+        print "[DEBUG]"+str(out)
     except Exception,e:
         print e
