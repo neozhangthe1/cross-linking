@@ -6,6 +6,9 @@ Created on Dec 18, 2012
 from metadata import settings
 import MySQLdb
 
+SQL_GET_PERSON = "SELECT * FROM na_person"
+SQL_GET_PROFILE = "SELECT * FROM person_profile_ext"
+
 class Mysql(object):
     def __init__(self):
         self.db = MySQLdb.connect(host=settings.DB_HOST,
@@ -13,3 +16,7 @@ class Mysql(object):
                                        passwd=settings.DB_PASS,
                                        db=settings.DB_NAME)
         self.cur = self.db.cursor()
+        
+    def fetch_person(self):
+        self.cur.execute(SQL_GET_PERSON)
+        return self.cur.fetchall()

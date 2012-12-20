@@ -43,11 +43,11 @@ def get_aminer_profile():
         out.close()
         
 def split_linkedin_dump():
-    skip = 1000000
+    skip = 2100000
     count = 0
-    log = codecs.open("H:\\data\\log"+str(skip)+".txt",'w', encoding="utf-8") 
-    id_map = codecs.open("H:\\data\\idmap"+str(skip)+".txt",'w', encoding="utf-8") 
-    linkedin_dump = codecs.open('H:\\data\\result.csv', encoding="utf-8")
+    log = codecs.open("C:\\data\\log"+str(skip)+".txt",'w', encoding="utf-8") 
+    id_map = codecs.open("C:\\data\\idmap"+str(skip)+".txt",'w', encoding="utf-8") 
+    linkedin_dump = codecs.open('D:\\result.csv', encoding="utf-8")
     out = ""
     linkedin_dump.next()
     for line in linkedin_dump:
@@ -66,7 +66,7 @@ def split_linkedin_dump():
             id_map.write(str(count)+' '+line[1:x]+'\n')
             count+=1
             try:
-                out = codecs.open("C:\\data\\linkedin1\\"+line[1:x].strip().replace('"'," ").split('?')[0],'w', encoding="utf-8")
+                out = codecs.open("C:\\data\\linkedin\\"+line[1:x].strip().replace('"'," ").split('?')[0],'w', encoding="utf-8")
             except Exception, e:
                 print e
         else:
