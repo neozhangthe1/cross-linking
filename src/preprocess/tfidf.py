@@ -27,9 +27,13 @@ def process_data():
 def process_aminer(docs):
     mysql = Mysql()
     people = mysql.fetch_person()
+    index = 0
     for row in people:
         data = ""
-        verbose.debug(row[0])
+        if index % 10000 == 0:
+            print index
+        index+=1
+#        verbose.debug(row[0])
         docs['id'].append(row[0])
         docs['type'].append(1)
         data+=(row[1]+'\n')
@@ -57,9 +61,12 @@ def process_linkedin(docs):
     mongo = Mongo()
     col = mongo.db['person_profiles']
     res = col.find()
+    index = 0
     for item in res:
         data = ""
-        verbose.debug(item['_id'])
+        if index % 10000 == 0:
+            print index
+        index+=1
         docs['id'].append(item['_id'])
         docs['type'].append(0)
         if item.has_key('interests'):
@@ -108,10 +115,13 @@ def process_linkedin(docs):
     return docs
 
 def tfidf(docs):
-    vectorizer = CountVectorizer(max_df=0.5,min_df=1,stop_words='english')
+    vectorizer = CountVectorizer(max_df=0.5,stop_words='english')
     transformer = TfidfTransformer()#subliner_tf stop_words='english'
+    print "count"
     counts = vectorizer.fit_transform(docs['data'])
+    print "tfidf"
     tfidfs = transformer.fit_transform(counts)
+    print "ok"
     feature_names = vectorizer.get_feature_names()
     out_counts = codecs.open(settings.DATA_PATH+"\\counts",'w', encoding="utf-8")
     out_tfidfs = codecs.open(settings.DATA_PATH+"\\tfidfs",'w', encoding="utf-8")
