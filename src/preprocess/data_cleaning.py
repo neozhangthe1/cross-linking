@@ -23,6 +23,7 @@ def plot_labeled_data_degree():
         degree.append(item['rel']['count'])
     plt.hist(degree, 100)
     plt.show()
+    
 
 def get_labeled_data_name():
     col = mongo110.db['labeled_data']
@@ -53,10 +54,10 @@ def check_werid_url():
                 verbose.debug(item['aminer'])
                 aid.append(item['aminer'])
     
-        
+
 def check_if_lenin_data_exist():
     col = mongo110.db["labeled_data"]
-    col61 = mongo110.con['test']["collection"]
+    col61 = mongo110.db['temp_person_profiles']
     lenin_urls = []
     results = []
     not_in_db = []
@@ -72,7 +73,7 @@ def check_if_lenin_data_exist():
         if query.count() == 0:
             verbose.debug("not in")
             verbose.debug(item['linkedin'])
-            not_in_db.append(item['linkedin'])
+            not_in_db.append(item['url'])
         elif query.count() == 1:
             for res in query:
                 verbose.debug(res['_id'])
