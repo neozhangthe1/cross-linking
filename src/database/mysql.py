@@ -10,6 +10,7 @@ SQL_GET_PERSON = "SELECT * FROM na_person"
 SQL_GET_PROFILE = "SELECT * FROM person_profile_ext"
 SQL_GET_PERSON_RELATION = "SELECT * FROM `na_person_relation` r WHERE r.pid1 = %s or r.pid2 = %s"
 SQL_GET_PERSON_RANK = "SELECT rank FROM person_ext WHERE person_id = %s and type = 2 and topic = -1"
+SQL_GET_PERSON_NAME = "SELECT names FROM na_person WHERE id = %s"
 
 class Mysql(object):
     def __init__(self):
@@ -30,3 +31,7 @@ class Mysql(object):
     def get_person_rank(self, pid):
         self.cur.execute(SQL_GET_PERSON_RANK % pid)
         return self.cur.fetchall()
+    
+    def get_person_name(self, pid):
+        self.cur.execute(SQL_GET_PERSON_NAME % pid)
+        return self.cur.fetchall()[0][0]
