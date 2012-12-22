@@ -8,6 +8,7 @@ from src.database.mysql import Mysql
 from src.metadata import verbose
 from src.metadata import utils
 from bs4 import UnicodeDammit
+import matplotlib.pyplot as plt
 
 import pickle
     
@@ -15,13 +16,20 @@ mongo110 = mongo.Mongo()
 mongo61 = mongo.Mongo61()
 mysql = Mysql()
 
+def plot_labeled_data_degree():
+    col = mongo110.db['labeled_data']
+    degree = []
+    for item in col.find():
+        degree.append(item['rel']['count'])
+    plt.hist(degree, 100)
+    plt.show()
+
 def get_labeled_data_name():
     col = mongo110.db['labeled_data']
     for item in col.find():
         name = mysql.get_person_name(item['aminer'])
         item['aminer_name']=UnicodeDammit(name).markup
-        col.save(item)
-    
+        col.save(item)    
     
 def gen_labeled_dataset():
     col = mongo110.db["lenin_label_data"]
