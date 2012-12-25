@@ -8,33 +8,61 @@ from src.database.mysql import Mysql
 from src.metadata import verbose
 from src.metadata import utils
 from bs4 import UnicodeDammit
+import codecs
 import matplotlib.pyplot as plt
 
 import pickle
     
-mongo110 = mongo.Mongo()
-mongo61 = mongo.Mongo61()
+mongo = mongo.Mongo()
 mysql = Mysql()
 
-def plot_labeled_data_degree():
-    col = mongo110.db['labeled_data']
-    degree = []
-    for item in col.find():
-        degree.append(item['rel']['count'])
-    plt.hist(degree, 100)
-    plt.show()
-    
 
+def get_also_view_urls():
+    col = mongo.db['person_profiles_1221']
+    urls = []
+    index = 0
+    for item in col.find() == 0:
+        if index % 1000:
+            print index
+        index+=1
+        try:
+            for a in item['also_view']:
+                urls.append(a['linkedin_id'].strip())
+        except Exception,e:
+            print e
+    out = codecs.open('alsoview_urls','w','utf-8')
+    for u in urls:
+        out.write(u+'\n')
+    out.close()
+    
+def get_labeled_data_aminer_profile():
+    index = 0
+    col = mongo.db['labeled_data']
+    for item in col.find():
+        verbose.index(index)
+        index+=1
+        item['aminer_profile_str']=mysql.get_person_aminer_profile(item['aminer'])
+        col.save(item)
+    
+def get_labeled_data_linkedin_profile():
+    index = 0
+    col = mongo.db['labeled_data']
+    for item in col.find():
+        verbose.index(index)
+        index+=1
+        item['linkedin_profile_str']=mongo.get_person_linkedin_profile(item['linkedin'])
+        col.save(item)
+        
 def get_labeled_data_name():
-    col = mongo110.db['labeled_data']
+    col = mongo.db['labeled_data']
     for item in col.find():
         name = mysql.get_person_name(item['aminer'])
         item['aminer_name']=UnicodeDammit(name).markup
         col.save(item)    
     
 def gen_labeled_dataset():
-    col = mongo110.db["lenin_label_data"]
-    labeled_col = mongo110.db["labeled_data"]
+    col = mongo.db["lenin_label_data"]
+    labeled_col = mongo.db["labeled_data"]
     for item in col.find():
         if 'e+' not in item['aminer'] and 'view' not in item['linkedin'] and item['flag']=='1':
             print item['aminer']
@@ -46,7 +74,7 @@ def gen_labeled_dataset():
                               'rel':item['rel']})
 
 def check_werid_url():
-    col = mongo110.db["lenin_label_data"]
+    col = mongo.db["lenin_label_data"]
     aid = []
     for item in col.find():
         if 'view' in item['linkedin']:
@@ -55,35 +83,46 @@ def check_werid_url():
                 aid.append(item['aminer'])
     
 
-def check_if_lenin_data_exist():
-    col = mongo110.db["labeled_data"]
-    col61 = mongo110.db['temp_person_profiles']
-    lenin_urls = []
-    results = []
+    
+def check_urls():
+    labeled = mongo.db["labeled_data"]
+    temp = mongo.db['temp_person_profiles']
+    l_urls = []
+    t_urls = []
+    index = 0
+    count = 0
+    for item in labeled.find():
+        verbose.index(index, 1000)
+        index+=1
+        l_urls.append(item['url'])
+    for item in temp.find():
+        t_urls.append(item['url'])
+            
+            
+def check_if_labeled_data_exist():
+    col = mongo.db["labeled_data"]
+    col61 = mongo.db['temp_person_profiles']
     not_in_db = []
+    ids = []
     index = 0
     count = 0
     for item in col.find():
-        if index % 100 == 0:
-            verbose.debug(index)
-            verbose.debug(len(results))
+        verbose.index(index, 1000)
         index+=1
-        lenin_urls.append(item['linkedin'])
         query = col61.find({"_id":item['linkedin']})
         if query.count() == 0:
-            verbose.debug("not in")
-            verbose.debug(item['linkedin'])
-            not_in_db.append(item['url'])
-        elif query.count() == 1:
-            for res in query:
-                verbose.debug(res['_id'])
-                results.append(res['url'])
-        else:
-            verbose.debug("werid")
-            verbose.debug(item['linkedin'])
+            url_q = col61.find({'url':item['url']})
+            if url_q.count() == 0:
+                verbose.debug("not in")
+                verbose.debug(item['linkedin'])
+                not_in_db.append(item['url'])
+    out = codecs.open('urls','w','utf-8')
+    for u in not_in_db:
+        out.write(u+'\n')
+    out.close()
             
 def filter_werid_data():
-    col = mongo110.db["aminer_linkedin_filtered_1124"]
+    col = mongo.db["aminer_linkedin_filtered_1124"]
     count = 0
     index = 0
     for item in col.find():
@@ -99,30 +138,24 @@ def filter_werid_data():
                 print count
     print count
     
-def check_lenin_data():
-    col = mongo110.db["lenin_label_data"]
+def check_labeled_data():
+    col = mongo.db["labeled_data"]
     count = 0
     index = 0
     data = {"id":[],"rel":[],"rank":[]}
     for item in col.find():
-        if index % 100 == 0:
-            print "INDEX "+str(index)
+        print "INDEX "+str(index)
         index+=1
-        data["id"].append(item['aminer'])
         rel = mysql.get_person_relation(item['aminer'])
-        data["rel"].append(rel)
-        rank = mysql.get_person_rank(item["aminer"])
-        data['rank'].append(rank)
+        print len(rel)
         item['rel']={"count":len(rel), 
                      "rel":[{"pid1":r[1],"pid2":r[2],"similarity":r[3],"rel_type":r[4]} for r in rel],
                      }
-        item['rank']=rank[0][0] if len(rank)>0 else -2
         col.save(item)
-    
     print count
     
 def dump_lenin_data():
-    col = mongo110.db['lenin_label_data']
+    col = mongo.db['lenin_label_data']
     data = []
     for item in col.find():
         data.append(item)
@@ -132,7 +165,7 @@ def dump_lenin_data():
     dump.close()
     
 def dump_mongo(col_name):
-    col = mongo110.db[col_name]
+    col = mongo.db[col_name]
     data = []
     for item in col.find():
         data.append(item)
@@ -142,7 +175,7 @@ def dump_mongo(col_name):
     dump.close()
     
 def compare1():
-    col = mongo110.db["aminer_linkedin_labeled_1208"]
+    col = mongo.db["aminer_linkedin_labeled_1208"]
     aid = []
     index = 0
     for item in col.find():
@@ -155,13 +188,9 @@ def compare1():
     lid = []
     for person in data:
         lid.append(person['aminer'])
-    
-def construct_linkedin_network():
-    col = mongo110.db["person_profile"]
-#    for col.find({},{'url'})
-    
+
 def compare():
-    col = mongo110.db["aminer_linkedin_1123"]
+    col = mongo.db["aminer_linkedin_1123"]
     aid = []
     lid = []
     index = 0
@@ -183,7 +212,7 @@ def compare():
     pickle.dump(aid,dump_aid)
     dump_lid = open('aminer_linkedin_1123_linkedin_url','w')
     pickle.dump(lid,dump_lid)
-    col = mongo110.db['aminer_linkedin_labeled_1124']
+    col = mongo.db['aminer_linkedin_labeled_1124']
     labeled_aid = []
     labeled_lid = []
     labeled_data = col.find({'$or':[{'labels.homepage_match':True},
@@ -211,41 +240,42 @@ def compare():
         xaid.append(person['aminer'])
         xlid.append(person['linkedin'])
         
-def plot_hindex():
-    import numpy as np
-    import matplotlib.mlab as mlab
-    import matplotlib.pyplot as plt
-    dump = open("E:\\My Projects\\Eclipse Workspace\\CrossLinking\\src\\preprocess\\lenin_data")
-    data = pickle.load(dump)
-    ranks = []    
-    verbose.debug("data loaded")
-    for d in data:
-        ranks.append(d['rank'])
-    
-    sranks = sorted(ranks)
-    mu, sigma = 100, 15
-    #x = mu + sigma*np.random.randn(10000)
-    x = range(0,len(sranks))
-    
-    # the histogram of the data
-    n, bins, patches = plt.hist(x, 50, normed=1, facecolor='green', alpha=0.75)
-    
-    # add a 'best fit' line
-    y = sranks#mlab.normpdf( bins, mu, sigma)
-    l = plt.plot(bins, y, 'r--', linewidth=1)
-    
-    plt.xlabel('Smarts')
-    plt.ylabel('Probability')
-    plt.title(r'$\mathrm{Histogram\ of\ IQ:}\ \mu=100,\ \sigma=15$')
-    plt.axis([40, 160, 0, 0.03])
-    plt.grid(True)
+def get_alsoview_url():
+    urls = []
+    index = 0
+    for item in mongo.db['temp_alsoview_person_profiles'].find():
+        verbose.index(index)
+        index+=1
+        if item.has_key('also_view'):
+            for al in item['also_view']:
+                x = mongo.db['temp_alsoview_person_profiles'].find({'_id':al['url']})
+                if x.count()==0:
+                    urls.append(al['linkedin_id'])
+    out = open('urls','w')
+    for u in set(urls):
+        out.write(u+'\n')
+    out.close()
 
-    verbose.debug("show")
-    plt.show()
-
+def check_alsoview_in_db():
+    index = 0
+    count = 0
+    for item in mongo.person_profiles.find(limit=10):
+        verbose.index(index)
+        index+=1
+        if item.has_key('also_view'):
+            for alsoview in item['also_view']:
+                x = mongo.person_profiles.find({"_id":alsoview['url']})
+                if x.count()>0:
+                    alsoview['crawled']=True
+                    verbose.debug(alsoview['url'])
+                    verbose.debug(count)
+                else:
+                    alsoview['crawled']=False
+            mongo.person_profiles.save(item)
+        
     
 def main():
-    get_labeled_data_name()
+    get_labeled_data_linkedin_profile()
 
 if __name__ == "__main__":
     main()

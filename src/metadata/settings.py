@@ -10,6 +10,11 @@ MONGO_NAME = "scrapy"
 
 MONGO_HOST61 = "10.1.1.61"
 
+
+REDIS_HOST = "10.1.1.110"
+REDIS_PORT = 6379
+REDIS_DB = 0
+
 import os
 HERE = os.path.abspath(os.curdir)
 PROJ_PATH = os.path.split(os.path.split(HERE)[0])[0]

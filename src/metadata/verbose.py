@@ -9,3 +9,7 @@ def debug(out):
         print "[DEBUG]"+str(out)
     except Exception,e:
         print e
+        
+def index(out, step = 1000):
+    if out % step == 0:
+        print "[INDEX]"+str(out)

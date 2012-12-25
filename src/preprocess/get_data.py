@@ -14,6 +14,9 @@ import codecs # this is a workaround for writing unicode string to file.
 SQL_GET_PERSON = "SELECT * FROM na_person"
 SQL_GET_PROFILE = "SELECT * FROM person_profile_ext"
 
+
+    
+
 def get_aminer_profile():
     path = ""
     mysql = Mysql()
