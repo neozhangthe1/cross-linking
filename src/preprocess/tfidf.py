@@ -114,6 +114,37 @@ def process_linkedin(docs):
         docs['data'].append(UnicodeDammit(data).markup)
     return docs
 
+
+def load_data(aminer, linkedin):
+    mysql = Mysql()
+    mongo = Mongo()
+    profiles = []
+    type = []
+    for i in aminer.nodes():
+        profile = mysql.get_person_aminer_profile(i)
+        profiles.append(profile)
+        type.append(0)
+    for i in linkedin.nodes():
+        profile = mongo.get_person_linkedin_profile(i)
+        profiles.append(profile)
+        type.append(1)
+    vectorizer = CountVectorizer(min_df=1,stop_words='english')
+    transformer = TfidfTransformer()
+    print "count"
+    counts = vectorizer.fit_transform(profiles)
+    import pickle
+    dump = open("counts_dump",'w')
+    pickle.dump(counts, pickle)
+    dump.close()
+    tfidfs = transformer.fit_transform(counts)
+    dump = open("tfidfs_dump",'w')
+    pickle.dump(counts, pickle)
+    dump.close()
+    print "ok"
+    
+        
+        
+
 def tfidf(docs):
     vectorizer = CountVectorizer(max_df=0.5,stop_words='english')
     transformer = TfidfTransformer()#subliner_tf stop_words='english'

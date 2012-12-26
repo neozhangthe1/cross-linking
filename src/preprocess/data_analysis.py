@@ -16,6 +16,11 @@ import matplotlib.pyplot as plt
 mongo = Mongo()
 mysql = Mysql("arnet_db_12_23")
 
+def pairwise_similarity(aminer, linkedin):
+    simiarity = {}
+    for a in aminer.get_nodes():
+        
+
 def filter_linkedin_network(graph):
     redis = Redis()
     for i in graph.nodes():

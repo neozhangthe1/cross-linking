@@ -115,3 +115,4 @@ class Mysql(object):
             except Exception,e:
                 print e
         return UnicodeDammit(profile_str).markup
+    
