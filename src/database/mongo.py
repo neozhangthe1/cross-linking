@@ -15,7 +15,7 @@ class Mongo(object):
 
     def get_person_linkedin_profile(self, id):
         profile_str=""
-        res = self.db['temp_person_profiles'].find({'_id':id})
+        res = self.db['person_profiles_1221'].find({'_id':id})
         if res.count()>0:
             item = res.next()
             if item.has_key('interests'):

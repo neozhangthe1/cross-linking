@@ -14,18 +14,76 @@ import pickle
 import matplotlib.pyplot as plt
 
 mongo = Mongo()
-mysql = Mysql("arnet_db_12_23")
+mysql = Mysql("arnet_db_12_23")       
 
-def pairwise_similarity(aminer, linkedin):
-    simiarity = {}
-    for a in aminer.get_nodes():
-        
+def check_candidate_set():
+    import pickle
+    label = pickle.load(open("D:\\Users\\chenwei\\experiment\\label_pair_list"))
+    similarity = pickle.load(open("D:\\Users\\chenwei\\experiment\\similarity.pickle"))
+    from collections import OrderedDict
+    rank_l = {}
+    rank_a = {}
+    rank_l_x = []
+    rank_a_x = []
+    index = 0
+    cc = 0
+    for i in label:
+        if index%1000==0:
+            print index
+        index+=1
+        if similarity.has_key(i[0]) and similarity.has_key(i[1]):
+            cc+=1
+            try:
+                r = OrderedDict(sorted(similarity[i[0]].items(),key=lambda x:x[1],reverse=True)).keys().index(i[1])
+                rank_a[i[0]] = r
+            except Exception,e:
+                print e
+                rank_a_x.append(i[0])
+            try:
+                r = OrderedDict(sorted(similarity[i[1]].items(),key=lambda x:x[1],reverse=True)).keys().index(i[0])
+                if rank_l.has_key(i[1]):
+                    print "---------------------------ERROR----------------------------------"
+                    try:
+                        print i[1]
+                    except Exception,e:
+                        print e
+                    print i[0]
+                    print "---------------------------END----------------------------------"
+                rank_l[i[1]] = r
+            except Exception,e:
+                print e
+                rank_l_x.append(i[0])
+
+    dis_rank_a = {}
+    for i in rank_a:
+        if not dis_rank_a.has_key(rank_a[i]):
+            dis_rank_a[rank_a[i]]=0
+        dis_rank_a[rank_a[i]]+=1
+    dis_rank_l = {}
+    for i in rank_l:
+        if not dis_rank_l.has_key(rank_l[i]):
+            dis_rank_l[rank_l[i]]=0
+        dis_rank_l[rank_l[i]]+=1
+
+    threshold = 200
+    count_a= 0
+    count_l= 0 
+    for i in rank_a:
+        if rank_a[i]<threshold:
+            count_a+=1
+    for i in rank_l:
+        if rank_l[i]<threshold:
+            count_l+=1
+
+
+
 
 def filter_linkedin_network(graph):
     redis = Redis()
     for i in graph.nodes():
         if not redis.sismember("linkedin_crawled",i):
             graph.remove_node(i)
+                    
             
 
 def plot_duplicated_names():

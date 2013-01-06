@@ -17,6 +17,28 @@ mongo = mongo.Mongo()
 mysql = Mysql()
 
 
+def get_similarity_dict():
+    import pickle
+    import pymongo
+    col = pymongo.Connection("10.1.1.110",12345)['scrapy']['idf_similarity']
+    sim = {}
+    x = pickle.load(open("D:\\Users\\yutao\\eclipse1\\profiles"))
+    ids = x['ids']
+    index = 0
+    for item in col.find():
+        if index%1000==0:
+            print index
+        index+=1
+        sim[item['_id']] = {}
+        for s in item['sim']:
+            if s[1]>0:
+                sim[item['_id']][ids[s[0]]] = s[1]
+    dump = open("Z:\\personal\\yutao\\cross linking\\similarity_linkedin.pickle",'w')
+    pickle.dump(sim,dump)
+    dump.close()
+
+
+
 def get_also_view_urls():
     col = mongo.db['person_profiles_1221']
     urls = []
