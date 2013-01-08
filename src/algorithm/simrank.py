@@ -98,13 +98,14 @@ from collections import OrderedDict
 label = pickle.load(open("D:\\Users\\chenwei\\experiment\\label_pair_list"))
 import json
 def dump_snapshot(threshold, sim, iter):
-    path = "Z:\\personal\\yutao\\cross linking\\simrank\\snapshot_double_"
+    path = "Z:\\personal\\yutao\\cross linking\\simrank\\snapshot_add_without_divide_"
     import codecs
     print "snap shot "+str(iter)
     rank_l = {}
     rank_a = {}
     rank_l_x = []
     rank_a_x = []
+    sim_label = []
     index = 0
     cc = 0
     for i in label:
@@ -123,13 +124,18 @@ def dump_snapshot(threshold, sim, iter):
                 rank_l[i[1]] = r
             except Exception,e:
                 rank_l_x.append(i[0])
+            try:
+                sim_label.append([i[0],i[1],sim[i[0]][i[1]]])
+            except:
+                pass
     rank_a_file = codecs.open(path+str(threshold)+"\\rank_a_"+str(iter)+".txt",'w','utf-8')
     rank_l_file = codecs.open(path+str(threshold)+"\\rank_l_"+str(iter)+".txt",'w','utf-8')
+    sim_label_file = codecs.open(path+str(threshold)+"\\sim_label_"+str(iter)+".txt",'w','utf-8')
+    json.dump(sim_label, sim_label_file)
     for k in rank_a:
         rank_a_file.write(k+' '+str(rank_a[k])+'\n')
     for k in rank_l:
         rank_l_file.write(k+' '+str(rank_l[k])+'\n')
-    
     dis_rank_a = {}
     for i in rank_a:
         if not dis_rank_a.has_key(rank_a[i]):
@@ -144,33 +150,26 @@ def dump_snapshot(threshold, sim, iter):
     dis_rank_l_file = codecs.open(path+str(threshold)+"\\dis_rank_l_"+str(iter)+".txt",'w','utf-8')
     json.dump(dis_rank_a, dis_rank_a_file)
     json.dump(dis_rank_l, dis_rank_l_file)
-
-    snap = codecs.open(path+str(threshold)+"\\snap_"+str(iter)+".txt",'w','utf-8')
-    for k in sim:
-        snap.write(k+' ')
-        for s in sim[k]:
-            snap.write(s+':'+str(sim[k][s]))
-            snap.write(' ')
-        snap.write('\n')
-    snap.close()
+    #snap = codecs.open(path+str(threshold)+"\\snap_"+str(iter)+".txt",'w','utf-8')
+    #json.dump(sim,snap)
+    #snap.close()
     print "---------------------------dump finished---------------------------------"
 
 def simrank(decay_factor=0.9, distance=5, max_iteration=10):
     from threading import Thread
     aminer = pickle.load(open("D:\\Users\\chenwei\\experiment\\aminer_two_3.pickle"))
     linkedin = pickle.load(open("D:\\Users\\chenwei\\experiment\\linkedin_two_filter_3.pickle"))
-    sim = pickle.load(open("D:\\Users\\chenwei\\experiment\\similarity.pickle"))
     #sim_old = copy.deepcopy(sim)
     simi =[{},{}]
-    simi[0]=sim
-    simi[1]=copy.deepcopy(sim)
+    simi[0]=pickle.load(open("D:\\Users\\chenwei\\experiment\\similarity.pickle"))
+    simi[1]=copy.deepcopy(simi[0])
     decay_factor = 1
-    for cur_iter in range(10):
-        logging.info("%sth iterating..." % (cur_iter))
-        if cur_iter!=0:
-            if _is_converge(simi[0], simi[1]):
-                break
-        logging.info("not converge")
+    for cur_iter in range(1000):
+        #logging.info("%sth iterating..." % (cur_iter))
+        #if cur_iter!=0:
+        #    if _is_converge(simi[0], simi[1]):
+        #        break
+        #logging.info("not converge")
         #sim_old = copy.deepcopy(sim)
         '''
         if cur_iter is an odd number, cur == 0, old == 1
@@ -181,10 +180,11 @@ def simrank(decay_factor=0.9, distance=5, max_iteration=10):
         '''
         dump snapshot for each iteration
         '''
-        Thread(target = dump_snapshot, args=[decay_factor, simi[old], cur_iter]).start()
+        if cur_iter%1==0:
+            Thread(target = dump_snapshot, args=[decay_factor, simi[old], cur_iter]).start()
         logging.info("algorithm start...")
         index = 0
-        for u in simi[old]:
+        for u in linkedin.nodes_iter():
             if index%10==0:
                 print "[INDEX]%s" %index
                 try:
@@ -198,8 +198,8 @@ def simrank(decay_factor=0.9, distance=5, max_iteration=10):
                     for n_v in aminer.neighbors(v):
                         if simi[old][n_u].has_key(n_v):
                             s_uv+=simi[old][n_u][n_v]
-                simi[cur][u][v] = (decay_factor * s_uv) / ((linkedin.degree(u))*(aminer.degree(v)))
-                simi[cur][v][u] = (decay_factor * s_uv) / ((linkedin.degree(u))*(aminer.degree(v)))
+                simi[cur][u][v] = (decay_factor * s_uv)# / ((linkedin.degree(u))*(aminer.degree(v)))
+                simi[cur][v][u] = (decay_factor * s_uv)# / ((linkedin.degree(u))*(aminer.degree(v)))
     return sim
 
 

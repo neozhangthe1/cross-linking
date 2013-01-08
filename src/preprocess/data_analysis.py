@@ -16,6 +16,67 @@ import matplotlib.pyplot as plt
 mongo = Mongo()
 mysql = Mysql("arnet_db_12_23")       
 
+import pickle
+from collections import OrderedDict
+label = pickle.load(open("D:\\Users\\chenwei\\experiment\\label_pair_list"))
+import json
+def dump_snapshot(path, iter):
+    path = "Z:\\personal\\yutao\\cross linking\\simrank\\snapshot"
+    import codecs
+    threshold = 1
+    for iter in range(15,17):
+        print "snap shot "+str(iter)
+        rank_l = {}
+        rank_a = {}
+        rank_l_x = []
+        rank_a_x = []
+        sim_label = []
+        index = 0
+        cc = 0
+        sim = pickle.load(open(path+"\\snap_"+str(iter)+'.nx'))
+        for i in label:
+            if index%1000==0:
+                print index
+            index+=1
+            if sim.has_key(i[0]) and sim.has_key(i[1]):
+                cc+=1
+                try:
+                    r = OrderedDict(sorted(sim[i[0]].items(),key=lambda x:x[1],reverse=True)).keys().index(i[1])
+                    rank_a[i[0]] = r
+                except Exception,e:
+                    rank_a_x.append(i[0])
+                try:
+                    r = OrderedDict(sorted(sim[i[1]].items(),key=lambda x:x[1],reverse=True)).keys().index(i[0])
+                    rank_l[i[1]] = r
+                except Exception,e:
+                    rank_l_x.append(i[0])
+                try:
+                    sim_label.append([i[0],i[1],sim[i[0]][i[1]]])
+                except:
+                    pass
+        rank_a_file = codecs.open(path+"\\rank_a_"+str(iter)+".txt",'w','utf-8')
+        rank_l_file = codecs.open(path+"\\rank_l_"+str(iter)+".txt",'w','utf-8')
+        sim_label_file = codecs.open(path+"\\sim_label_"+str(iter)+".txt",'w','utf-8')
+        json.dump(sim_label, sim_label_file)
+        for k in rank_a:
+            rank_a_file.write(k+' '+str(rank_a[k])+'\n')
+        for k in rank_l:
+            rank_l_file.write(k+' '+str(rank_l[k])+'\n')
+        dis_rank_a = {}
+        for i in rank_a:
+            if not dis_rank_a.has_key(rank_a[i]):
+                dis_rank_a[rank_a[i]]=0
+            dis_rank_a[rank_a[i]]+=1
+        dis_rank_l = {}
+        for i in rank_l:
+            if not dis_rank_l.has_key(rank_l[i]):
+                dis_rank_l[rank_l[i]]=0
+            dis_rank_l[rank_l[i]]+=1
+        dis_rank_a_file = codecs.open(path+"\\dis_rank_a_"+str(iter)+".txt",'w','utf-8')
+        dis_rank_l_file = codecs.open(path+"\\dis_rank_l_"+str(iter)+".txt",'w','utf-8')
+        json.dump(dis_rank_a, dis_rank_a_file)
+        json.dump(dis_rank_l, dis_rank_l_file)
+
 def check_candidate_set():
     import pickle
     label = pickle.load(open("D:\\Users\\chenwei\\experiment\\label_pair_list"))
